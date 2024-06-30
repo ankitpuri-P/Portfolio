@@ -16,7 +16,7 @@ export default function Home() {
 		setMessages(newMessages);
 		setMessageInput('');
 		const apiMessage=await fetch(
-			'/api',
+			'https://portfolio-teal-nu-91.vercel.app/api',
 			{
 				method: 'POST',
 				headers:{
