@@ -1,40 +1,24 @@
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { NextResponse } from 'next/server';
-import Cors from 'cors';
+
 
 // Define Constants
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
 const apiKey = process.env.AZURE_OPENAI_API_KEY;
 const modelDeploymentName = "Jarvis";
 
-const cors = Cors({
-    methods: ['GET', 'HEAD', 'POST'],
-    origin: 'https://ankitpuri-p.github.io/Portfolio/' // Replace with your actual GitHub Pages URL
-  });
 
-  function runMiddleware(req, res, fn) {
-    return new Promise((resolve, reject) => {
-      fn(req, res, (result) => {
-        if (result instanceof Error) {
-          return reject(result);
-        }
-        return resolve(result);
-      });
-    });
-  }
 
 const baseUrl = process.env.NODE_ENV === 'production' 
     ? 'https://ankitpuri-p.github.io/Portfolio/' // Replace with your actual GitHub Pages URL
     : '';
 
-export async function POST(req,res) {
+export async function POST(req) {
     try {
         // Check for missing environment variables
         if (!endpoint || !apiKey || !modelDeploymentName) {
             throw new Error('Missing required environment variables for Azure OpenAI');
         }
-
-        await runMiddleware(req, res, cors);
 
         // Initialize OpenAI Client
         const { messages } = await req.json();
