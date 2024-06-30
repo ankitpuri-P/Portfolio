@@ -12,7 +12,6 @@ const cors = Cors({
   origin: 'https://portfolio-teal-nu-91.vercel.app', // Your Vercel URL
 });
 
-
 function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result) => {
@@ -24,41 +23,42 @@ function runMiddleware(req, res, fn) {
   });
 }
 
-export async function POST(req,res) {
-    try {
-        // Check for missing environment variables
-        if (!endpoint || !apiKey || !modelDeploymentName) {
-            throw new Error('Missing required environment variables for Azure OpenAI');
-        }
-        await runMiddleware(req, res, cors);
-        // Initialize OpenAI Client
-        const { messages } = await req.json();
-        const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
+export async function POST(req, res) {
+  try {
+    // Check for missing environment variables
+    if (!endpoint || !apiKey || !modelDeploymentName) {
+      throw new Error('Missing required environment variables for Azure OpenAI');
+    }
+    await runMiddleware(req, res, cors);
 
-        messages.unshift({
-            role: 'system',
-            content: `You are Jarvis, answering only questions based on the resume provided.
+    // Initialize OpenAI Client
+    const { messages } = await req.json();
+    const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
+
+    messages.unshift({
+      role: 'system',
+      content: `You are Jarvis, answering only questions based on the resume provided.
 
 Resume:
 ${DATA_RESUME}
 Help users learn more about Ankit from his resume.
 `
-        });
+    });
 
-        // Pass options as a separate object
-        const response = await client.getChatCompletions(modelDeploymentName, messages, {
-            maxTokens: 128 // Fix the assignment here
-        });
+    // Pass options as a separate object
+    const response = await client.getChatCompletions(modelDeploymentName, messages, {
+      maxTokens: 128 // Fix the assignment here
+    });
 
-        const completion = response.choices[0];
+    const completion = response.choices[0];
 
-        return NextResponse.json({
-            message: completion.message.content
-        });
-    } catch (error) {
-        console.error("OpenAI API Error:", error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
-    }
+    return NextResponse.json({
+      message: completion.message.content
+    });
+  } catch (error) {
+    console.error("OpenAI API Error:", error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  }
 }
 
 const DATA_RESUME = `Ankit Puri
@@ -128,3 +128,12 @@ Others:
 - 3* (star) Coder on CodeChef (https://www.codechef.com/users/top_l_percent)
 - Ranked 5362 (All India rank) out of more than 5 Lakh Competitors in IICC (INNOVATE INDIA CODING CHAMPIONSHIP)
 `;
+
+export default function handler(req, res) {
+  if (req.method === 'POST') {
+    return POST(req, res);
+  } else {
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+}
