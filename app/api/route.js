@@ -6,6 +6,10 @@ const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
 const apiKey = process.env.AZURE_OPENAI_API_KEY;
 const modelDeploymentName = "Jarvis";
 
+const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://ankitpuri-p.github.io/Portfolio/' // Replace with your actual GitHub Pages URL
+    : '';
+
 export async function POST(req) {
     try {
         // Check for missing environment variables
