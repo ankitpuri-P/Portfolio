@@ -36,7 +36,7 @@ export async function POST(req, res) {
     const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
 
     messages.unshift({
-      role: 'system',
+      role: 'assistant',
       content: `You are Jarvis, answering only questions based on the resume provided.
 
 Resume:
