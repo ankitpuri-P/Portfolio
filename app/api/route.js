@@ -1,67 +1,67 @@
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { NextResponse } from 'next/server';
-import Cors from 'cors';
 
 // Define Constants
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
 const apiKey = process.env.AZURE_OPENAI_API_KEY;
 const modelDeploymentName = "Jarvis";
 
-const cors = Cors({
-  methods: ['GET', 'HEAD', 'POST'],
-  origin: 'https://ankitpuri-p.github.io/Portfolio/' // Replace with your actual GitHub Pages URL
-});
+// ** Vercel Configuration **
+export const runtime = 'nodejs';
 
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-}
+export const config = {
+  matcher: "/api",
+};
 
-const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://ankitpuri-p.github.io/Portfolio/' // Replace with your actual GitHub Pages URL
-    : '';
 
-export async function POST(req,res) {
-    try {
-        // Check for missing environment variables
-        if (!endpoint || !apiKey || !modelDeploymentName) {
-            throw new Error('Missing required environment variables for Azure OpenAI');
-        }
-        await runMiddleware(req, res, cors);
-        // Initialize OpenAI Client
-        const { messages } = await req.json();
-        const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
+export async function POST(req) {
+  try {
+    // Check for missing environment variables
+    if (!endpoint || !apiKey || !modelDeploymentName) {
+      throw new Error('Missing required environment variables for Azure OpenAI');
+    }
 
-        messages.unshift({
-            role: 'system',
-            content: `You are Jarvis, answering only questions based on the resume provided.
+    // Initialize OpenAI Client
+    const { messages } = await req.json();
+    const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey));
+
+    messages.unshift({
+      role: 'system',
+      content: `You are Jarvis, answering only questions based on the resume provided.
 
 Resume:
 ${DATA_RESUME}
 Help users learn more about Ankit from his resume.
 `
-        });
+    });
 
-        // Pass options as a separate object
-        const response = await client.getChatCompletions(modelDeploymentName, messages, {
-            maxTokens: 128 // Fix the assignment here
-        });
+    const response = await client.getChatCompletions(modelDeploymentName, messages, {
+      maxTokens: 128
+    });
 
-        const completion = response.choices[0];
+    const completion = response.choices[0];
 
-        return NextResponse.json({
-            message: completion.message.content
-        });
-    } catch (error) {
-        console.error("OpenAI API Error:", error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    // Enhanced Response Handling
+    return new NextResponse(JSON.stringify({ message: completion.message.content }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error("OpenAI API Error:", error);
+
+    // Enhanced Error Handling
+    if (error.response) {
+      return new NextResponse(JSON.stringify(error.response.data), {
+        status: error.response.status,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } else {
+      return new NextResponse(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
+  }
 }
 
 const DATA_RESUME = `Ankit Puri
